@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, UploadFile, File , Depends, HTTPException
 from fastapi import Request
 from tempfile import NamedTemporaryFile
@@ -18,6 +19,9 @@ import asyncio
 import io
 import base64
 from pymongo import MongoClient
+import numpy as np
+import flowio
+import flowutils
 # import flowkit as fk
 
 app = FastAPI()
@@ -47,6 +51,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 mongodb_connection_string="mongodb+srv://ojas21101:ojas1234@clusterviz.tjmyjct.mongodb.net/?retryWrites=true&w=majority"
 mongo_client = MongoClient(mongodb_connection_string)
 db = mongo_client["clusterviz"]
+spillover_matrix_collection = db["spillover_matrix"]
+class FileData(BaseModel):
+    columnNames: list
+    spilloverMatrix: list
+
 @app.post("/api/convert-fcs-to-csv")
 async def convert_fcs_to_csv(file: UploadFile = File(...) ):
     # print("Received file:", file.filename)
@@ -72,9 +81,23 @@ async def convert_fcs_to_csv(file: UploadFile = File(...) ):
             # db["column_names"].insert_one({"columnNames": column_names})
 
         # Delete the temporary files
+        
         os.remove(temp_fcs_path)
+        
+        file_id = str(file.filename) + "_" + str(datetime.now().timestamp())
+        print(file_id)
 
-        return {"columnNames": column_names}
+        # Store the column names in the database
+        db["column_names"].update_one(
+            {"_id": file_id},
+            {"$set": {"columnNames": column_names}},
+            upsert=True,
+        )
+
+        return {"fileId": file_id, "columnNames": column_names}
+
+
+        # return {"columnNames": column_names}
 
     try:
         # Execute your FCS to CSV conversion script
@@ -85,10 +108,43 @@ async def convert_fcs_to_csv(file: UploadFile = File(...) ):
         with open(output_csv_path, "r") as csv_file:
             reader = csv.reader(csv_file)
             column_names = next(reader)
-            db["column_names"].insert_one({"columnNames": column_names})
-        os.remove(temp_fcs_path)
+            
+            # db["column_names"].insert_one({"columnNames": column_names})
+        file_id = str(file.filename) + "_" + str(datetime.now().timestamp())
+        db["column_names"].update_one(
+            {"_id": file_id},
+            {"$set": {"columnNames": column_names}},
+            upsert=True,
+        )
+        fcs_file = flowio.FlowData(temp_fcs_path)
+        if 'spillover' in fcs_file.text:
+            spillover_matrix, column_headers = flowutils.compensate.get_spill(fcs_file.text['spillover'])
+        else:
+            # If spillover matrix doesn't exist, create an empty matrix with all values set to 0
+            spillover_matrix = np.zeros((len(column_names), len(column_names)))
+            column_headers=[]
+        
+        df_spillover_matrix = pd.DataFrame(spillover_matrix, columns=column_headers)
+        df_json = df_spillover_matrix.to_json(orient="columns")
 
-        return {"columnNames": column_names}
+# Convert the JSON to a dictionary
+        spillover_data = json.loads(df_json)
+
+
+        spillover_matrix_collection.update_one(
+            {"_id": file_id},
+            {"$set": {"spilloverMatrix": spillover_data}},
+            upsert=True,
+        )
+
+        print("Saved spillover matrix in MongoDB collection 'spillover_matrix'")
+        os.remove(temp_fcs_path) 
+
+
+        return {"fileId": file_id, "columnNames": column_names}
+
+        
+        # return {"columnNames": column_names}
 
     except Exception as e:
         os.remove(temp_fcs_path)
@@ -223,14 +279,23 @@ async def protected(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid authentication token")
 # using db to get the columnnames
 @app.get("/api/get-column-names")
-async def get_column_names():
-    collection = db["column_names"]
-    document = collection.find_one()
+async def get_column_names(file_id: str):
+    document = db["column_names"].find_one({"_id": file_id})
     if document:
         column_names = document["columnNames"]
         return {"columnNames": column_names}
     else:
         return {"columnNames": []}
+
+
+@app.get("/api/get-spillover-matrix")
+async def get_spillover_matrix(file_id: str):
+    document = spillover_matrix_collection.find_one({"_id": file_id})
+    if document:
+        spillover_matrix = document["spilloverMatrix"]
+        return {"spilloverMatrix": spillover_matrix}
+    else:
+        return {"spilloverMatrix": []}
 
 # async def extract_div_and_script(html):
 #     soup = BeautifulSoup(html, 'html.parser')

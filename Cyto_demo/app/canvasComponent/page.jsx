@@ -4,8 +4,10 @@ import { FaHome, FaFileAlt, FaUsers, FaCog, FaSignOutAlt } from 'react-icons/fa'
 import HeaderProfileNav from '..//HeaderProfileNav';
 import Link from "next/Link";
 import CanvasPage from "./canvaspage";
+// import { useGlobalContext } from '../context/store';
 
 const Page = () => {
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleDropdownToggle = () => {

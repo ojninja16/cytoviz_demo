@@ -6,57 +6,82 @@ import Link from "next/Link";
 import HeaderProfileNav from "..//HeaderProfileNav"
 import axios from 'axios';
 import LoadingIndicator from '../functionalComponents/LoadingIndicator';
+import usePlotStore from '../store';
+import { useGlobalContext } from '../context/store';
+
 // import { useRouter } from 'next/router'
 
 const SpilloverMatrix = () => {
-    const matrixData = [
-      [0.8, 0.1, 0.2],
-      [0.3, 0.9, 0.4],
-      [0.5, 0.2, 0.7],
-      [0.4, 0.6, 0.3],
-    ];
-  
-    return (
-      <div className="p-4 overflow-y-auto">
-        <table className="w-full bg-white rounded-lg shadow-md">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="py-2 px-4 border-b text-black">Channel 1</th>
-              <th className="py-2 px-4 border-b text-black">Fluorochrome 1</th>
-              <th className="py-2 px-4 border-b text-black">Fluorochrome 2</th>
+  const { fileId } = useGlobalContext();
+  const [matrixData, setMatrixData] = useState([]);
+
+  useEffect(() => {
+    fetchSpilloverMatrix();
+  }, []);
+
+  // Function to fetch the spillover matrix from the backend
+  async function fetchSpilloverMatrix() {
+    try {
+      const response = await axios.get(`http://localhost:8000/api/get-spillover-matrix?file_id=${fileId}`);
+      const spilloverMatrix = response.data.spilloverMatrix;
+      const formattedMatrix = Object.keys(spilloverMatrix).map((channel) => {
+        return [channel, ...Object.values(spilloverMatrix[channel])];
+      });
+      setMatrixData(formattedMatrix);
+    } catch (error) {
+      console.error("Error fetching spillover matrix:", error);
+      throw error;
+    }
+  }
+
+  return (
+    <div className="p-4 overflow-y-auto">
+      <table className="w-full bg-white rounded-lg shadow-md">
+        <thead className="bg-gray-200">
+          <tr>
+            <th className="py-2 px-4 border-b text-black">Channel</th>
+            {matrixData[0] &&
+              matrixData[0].slice(1).map((columnHeader, index) => (
+                <th className="py-2 px-4 border-b text-black" key={index}>
+                
+                </th>
+              ))}
+          </tr>
+        </thead>
+        <tbody>
+          {matrixData.map((row, index) => (
+            <tr className="hover:bg-gray-100" key={index}>
+              {row.map((value, idx) => (
+                <td className="py-2 px-4 border-b border-r text-black" key={idx}>
+                  {idx === 0 ? value : value.toFixed(2)}
+                </td>
+              ))}
             </tr>
-          </thead>
-          <tbody>
-            {matrixData.map((row, index) => (
-              <tr className="hover:bg-gray-100" key={index}>
-                {row.map((value, idx) => (
-                  <td className="py-2 px-4 border-b border-r text-black" key={idx}>
-                    {value.toFixed(2)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 
 const FileAnalysis = () => {
   const [columnNames, setColumnNames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const {fileId,setFileId} = useGlobalContext();
+  // const fileId = usePlotStore(state => state.fileId);
   useEffect(() => {
     getColumnNames();
   },[])
   const getColumnNames = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/get-column-names');
+      const response = await axios.get(`http://localhost:8000/api/get-column-names?file_id=${fileId}`);
       if (response.status === 200) {
         setColumnNames(response.data.columnNames);
         setIsLoading(false);
       } else {
         console.error('Error fetching column names');
-      }
+      } 
     } catch (error) {
       console.error('Error fetching column names', error);
     }

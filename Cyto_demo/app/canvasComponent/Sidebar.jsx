@@ -65,7 +65,7 @@ const Sidebar = () => {
       </aside>
       <div className="flex-grow">
         {activeButton === "parameters" && (
-          <ParametersSection onClose={handleCloseParameters} />
+          <ParametersSection onClose={handleCloseParameters}  />
         )}
         {activeButton === "compensation" && (
           <CompensationSection onClose={handleCloseCompensation} />

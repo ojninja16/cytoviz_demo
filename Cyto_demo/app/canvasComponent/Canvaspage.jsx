@@ -8,6 +8,7 @@
   import PlotCreator from "../functionalComponents/Plotcreator";
   import ServerRenderedComponent from "../functionalComponents/PlotDisplayer";
   import LoadingIndicator from "../functionalComponents/LoadingIndicator";
+  import { useGlobalContext } from "../context/store";
   import axios from 'axios';
 
   const CanvasPage = () => {
@@ -18,12 +19,15 @@
     const [isLoadingPlot, setLoadingPlot] = useState(false);
     const [channelNamesFetched, setChannelNamesFetched] = useState(false); 
     const [imageData, setImageData] = useState("");
+    const {fileId,setFileId} = useGlobalContext();
+    // const fileId = usePlotStore(state => state.fileId);
+    // console.log(fileId);
     useEffect(() => {
       getChannelnames();
     },[])
     const getChannelnames = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/get-column-names');
+        const response = await axios.get(`http://localhost:8000/api/get-column-names?file_id=fcsdaata.fcs_1687321598.100472`);
         if (response.status === 200) {
           console.log(response.data.columnNames);
           setChannelNames(response.data.columnNames);
@@ -109,10 +113,13 @@
                 setSelectedPlotParams={setSelectedPlotParams}
                 handlePlotCreation={handlePlotCreation}
                 showPlotCreator={showPlotCreator}
+                imageData={imageData}
+                resetPlot={resetPlot}
+                isLoadingPlot={isLoadingPlot}
               />
             )}
 
-              {isLoadingPlot ? (
+              {/* {isLoadingPlot ? (
                 <LoadingIndicator />
               ) : (
                 <>
@@ -126,7 +133,7 @@
                     </div>
                   )}
                 </>
-              )}
+              )} */}
             </div>
           </div>
         </div>

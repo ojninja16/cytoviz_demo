@@ -7,9 +7,14 @@ import Link from "next/Link";
 import HeaderProfileNav from '..//HeaderProfileNav';
 import FileUploaderButton from '../functionalComponents/Fileuploaderbutton';
 import LoadingIndicator from '../functionalComponents/LoadingIndicator';
+import FileIdContext from '../FileIdContext';
+import { useGlobalContext } from '../context/store';
+// import usePlotStore from '../store';
 // import useStoredChannelNames from '../useStoredChannelNames';
-import useChannelStore from '../store';
+// import useChannelStore from '../store';
 import axios from 'axios';
+// import usePlotStore from '..//store.js';
+// import {setFileId } from '..//store.js';
 const MyFCSfile = () => {
   // const [channelNames, setChannelNames] = useState([]);
   const [isFileSelected, setFileSelected] = useState(false);
@@ -17,13 +22,17 @@ const MyFCSfile = () => {
   const [isLoading, setLoading] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [uploadedFileSize, setUploadedFileSize] = useState('');
-  const channelNames = useChannelStore((state) => state.channelNames);
-  const setChannelNames = useChannelStore((state) => state.setChannelNames);
-
+  const [channelNames, setChannelNames] = useState([]);
+  const {fileId, setFileId} = useGlobalContext();
+  // const [fileId, setFileId] = useState('');
+  
   // const ColumnNamesContext = createContext([]);
   
 
   const handleFileDrop = async (acceptedFiles) => {
+    
+    // const fileId = usePlotStore((state) => state.fileId);
+    // const { fileId, setFileId } = useContext(FileIdContext);
     const file = acceptedFiles[0];
     const formData = new FormData();
     formData.append('file', file);
@@ -34,9 +43,13 @@ const MyFCSfile = () => {
       console.log(response);
 
       if (response.status === 200) {
-        const channelNames = response.data.columnNames;
-        console.log(channelNames);
-        setChannelNames(channelNames);
+        const headers = response.data.columnNames;
+        console.log(headers);
+        setChannelNames(headers);
+        setFileId(response.data.fileId);
+        console.log(response.data.fileId);
+        // setFileId(response.data.fileId);
+        // usePlotStore((state) => state.setFileId(response.data.fileId));
         setFileParsed(true);
         setUploadedFileName(file.name);
         setUploadedFileSize(formatFileSize(file.size));
