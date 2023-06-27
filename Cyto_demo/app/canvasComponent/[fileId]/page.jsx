@@ -1,12 +1,13 @@
 "use client"
 import React, { useState,useEffect } from 'react';
 import { FaHome, FaFileAlt, FaUsers, FaCog, FaSignOutAlt } from 'react-icons/fa';
-import HeaderProfileNav from '..//HeaderProfileNav';
-import Link from "next/Link";
-import CanvasPage from "./canvaspage";
+import HeaderProfileNav from '../../HeaderProfileNav';
+import Link from "next/link";
+import CanvasPage from "../canvaspage";
 // import { useGlobalContext } from '../context/store';
 
-const Page = () => {
+const Page = ({params}) => {
+  const fileId = params.fileId;
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -81,7 +82,7 @@ const Page = () => {
         {/* Content */}
         <div className="flex-1 bg-gradient-to-r from-cyan-100 to-blue-300 overflow-y-auto overflow-x-auto mt-0 px-0">
         <div className="flex-grow mt-0 px-0">
-            <CanvasPage />
+            <CanvasPage fileId={fileId} />
         </div>
         </div>
       </div>

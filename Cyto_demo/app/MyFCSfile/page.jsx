@@ -3,12 +3,13 @@
 import React,{useState,useEffect,useContext} from 'react';
 import { FaHome, FaFileAlt, FaUsers, FaCog, FaSignOutAlt } from 'react-icons/fa';
 
-import Link from "next/Link";
+import Link from "next/link";
 import HeaderProfileNav from '..//HeaderProfileNav';
 import FileUploaderButton from '../functionalComponents/Fileuploaderbutton';
 import LoadingIndicator from '../functionalComponents/LoadingIndicator';
+import { useRouter } from 'next/navigation';
 import FileIdContext from '../FileIdContext';
-import { useGlobalContext } from '../context/store';
+// import { useGlobalContext } from '../context/store';
 // import usePlotStore from '../store';
 // import useStoredChannelNames from '../useStoredChannelNames';
 // import useChannelStore from '../store';
@@ -23,13 +24,16 @@ const MyFCSfile = () => {
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [uploadedFileSize, setUploadedFileSize] = useState('');
   const [channelNames, setChannelNames] = useState([]);
-  const {fileId, setFileId} = useGlobalContext();
+  const [fileId, setFileId] = useState('');
+  // const router = useRouter();
   // const [fileId, setFileId] = useState('');
   
   // const ColumnNamesContext = createContext([]);
   
 
   const handleFileDrop = async (acceptedFiles) => {
+    
+
     
     // const fileId = usePlotStore((state) => state.fileId);
     // const { fileId, setFileId } = useContext(FileIdContext);
@@ -38,6 +42,7 @@ const MyFCSfile = () => {
     formData.append('file', file);
 
     try {
+      console.log('Uploading file...');
       setLoading(true);
       const response = await axios.post('http://localhost:8000/api/convert-fcs-to-csv', formData);
       console.log(response);
@@ -53,6 +58,10 @@ const MyFCSfile = () => {
         setFileParsed(true);
         setUploadedFileName(file.name);
         setUploadedFileSize(formatFileSize(file.size));
+        // const route = `/fileAnalysis/${response.data.fileId}`;
+      // Navigate to the dynamic route
+        // router.push(route);
+        
       } else {
         console.error('Error uploading and converting file');
       }
@@ -186,7 +195,7 @@ const MyFCSfile = () => {
               )}
               {isFileParsed && (
                 <tr>
-                  <td className="py-2 px-4 border-b border-r"><Link href= "/fileAnalysis" >
+                  <td className="py-2 px-4 border-b border-r"><Link href={`/fileAnalysis/${fileId}`} >
                       <span className="text-blue-500 hover:text-blue-700 transition-colors">
                         {uploadedFileName}
                       </span>

@@ -10,8 +10,10 @@
   import LoadingIndicator from "../functionalComponents/LoadingIndicator";
   import { useGlobalContext } from "../context/store";
   import axios from 'axios';
+  import { useRouter } from 'next/navigation'
 
-  const CanvasPage = () => {
+  const CanvasPage = ({fileId}) => {
+    console.log(fileId);
     const [showMenuBar, setShowMenuBar] = useState(false);
     const [showPlotCreator, setShowPlotCreator] = useState(false);
     const [channelNames, setChannelNames] = useState([]);
@@ -19,7 +21,9 @@
     const [isLoadingPlot, setLoadingPlot] = useState(false);
     const [channelNamesFetched, setChannelNamesFetched] = useState(false); 
     const [imageData, setImageData] = useState("");
-    const {fileId,setFileId} = useGlobalContext();
+    const router = useRouter();
+    // const fileId = params.fileId;
+    // const {fileId,setFileId} = useGlobalContext();
     // const fileId = usePlotStore(state => state.fileId);
     // console.log(fileId);
     useEffect(() => {
@@ -27,7 +31,7 @@
     },[])
     const getChannelnames = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/api/get-column-names?file_id=fcsdaata.fcs_1687321598.100472`);
+        const response = await axios.get(`http://localhost:8000/api/get-column-names?file_id=${fileId}`);
         if (response.status === 200) {
           console.log(response.data.columnNames);
           setChannelNames(response.data.columnNames);
@@ -56,7 +60,7 @@
 
       try {
         setLoadingPlot(true);
-        const response = await axios.post('http://localhost:8000/api/generate-plots', sendData, {
+        const response = await axios.post(`http://localhost:8000/api/generate-plots?file_id=${fileId}`, sendData, {
           headers: {
             'Content-Type': 'application/json',
           }

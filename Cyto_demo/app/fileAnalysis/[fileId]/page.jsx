@@ -2,17 +2,21 @@
 
 import React ,{useState,useEffect}from 'react';
 import { FaHome, FaFileAlt, FaUsers, FaCog, FaSignOutAlt } from 'react-icons/fa';
-import Link from "next/Link";
-import HeaderProfileNav from "..//HeaderProfileNav"
+import Link from "next/link";
+import HeaderProfileNav from "../../HeaderProfileNav"
 import axios from 'axios';
-import LoadingIndicator from '../functionalComponents/LoadingIndicator';
-import usePlotStore from '../store';
-import { useGlobalContext } from '../context/store';
+import LoadingIndicator from '../../functionalComponents/LoadingIndicator';
+import usePlotStore from '../../store';
+import { useGlobalContext } from '../../context/store';
+import { useRouter } from 'next/navigation';
 
 // import { useRouter } from 'next/router'
 
-const SpilloverMatrix = () => {
-  const { fileId } = useGlobalContext();
+const SpilloverMatrix = ({params}) => {
+  console.log(params);
+  const router = useRouter();
+  const fileId = params.fileId;
+  // const { fileId } = useGlobalContext();
   const [matrixData, setMatrixData] = useState([]);
 
   useEffect(() => {
@@ -65,10 +69,12 @@ const SpilloverMatrix = () => {
 };
 
 
-const FileAnalysis = () => {
+const FileAnalysis = ({params}) => {
   const [columnNames, setColumnNames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const {fileId,setFileId} = useGlobalContext();
+  // const router = useRouter();
+  const fileId =params.fileId;
+  // const {fileId,setFileId} = useGlobalContext();
   // const fileId = usePlotStore(state => state.fileId);
   useEffect(() => {
     getColumnNames();
@@ -190,12 +196,12 @@ const FileAnalysis = () => {
               alt="external-canvas-cryp-finance-line-colors-royyan-wijaya"
             />
             <button>
-            <a
-              href="/canvasComponent"
+            <Link
+              href={`/canvasComponent/${fileId}`}
               className="text-white hover:text-cyan-300 text-lg font-medium bg-blue-700 rounded-lg px-3"
             >
               Open in Canvas
-            </a>
+            </Link>
             </button>
           </div>
 
@@ -228,7 +234,7 @@ const FileAnalysis = () => {
           <div className="flex flex-col h-1/3">
             <h2 className="text-2xl font-bold mb-4 text-black">Compensation</h2>
             <div className="flex-1 h-2/3 bg-white rounded-lg overflow-y-auto shadow-md">
-              <SpilloverMatrix />
+              <SpilloverMatrix  params={params}/>
             </div>
           </div>
         </div>
